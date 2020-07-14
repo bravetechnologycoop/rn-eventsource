@@ -26,16 +26,19 @@
 'use strict';
 
 import EventTarget from 'event-target-shim';
-import { Networking } from 'react-native';
+import { Networking, Platform } from 'react-native';
 
-const EVENT_SOURCE_EVENTS = ['error', 'message', 'open'];
+const EVENT_SOURCE_EVENTS = ['error', 'message', 'open','connection-error'];
 
 // char codes
 const bom = [239, 187, 191]; // byte order mark
 const lf = 10;
 const cr = 13;
 
-const maxRetryAttempts = 5;
+const reTrim = /^(\s|\u00A0)+|(\s|\u00A0)+$/g;
+
+
+const maxRetryAttempts = 15;
 /**
  * An RCTNetworking-based implementation of the EventSource web standard.
  *
@@ -47,6 +50,9 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
   static CONNECTING: number = 0;
   static OPEN: number = 1;
   static CLOSED: number = 2;
+  static XMLHTTP_LOADING: number = 3;
+  static XMLHTTP_DONE: number = 4;
+
 
   // Properties
   readyState: number = EventSource.CONNECTING;
@@ -95,10 +101,14 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
     }
     this.url = url;
 
-    this._headers['Cache-Control'] = 'no-store';
+    this._headers['Cache-Control'] = 'no-cache, no-store';
     this._headers.Accept = 'text/event-stream';
     if (this._lastEventId) {
       this._headers['Last-Event-ID'] = this._lastEventId;
+    }
+
+    if(Platform.OS === 'android') {
+      this._headers["X-Requested-With"] = "XMLHttpRequest";
     }
 
     if (eventSourceInitDict) {
@@ -175,7 +185,7 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
       '', // body for EventSource request is always empty
       'text', // SSE is a text protocol
       true, // we want incremental events
-      0, // there is no timeout defined in the WHATWG spec for EventSource
+      10000, // there is no timeout defined in the WHATWG spec for EventSource
       this.__didCreateRequest.bind(this),
       this.withCredentials,
     );
