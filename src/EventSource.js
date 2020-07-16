@@ -185,7 +185,7 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
       '', // body for EventSource request is always empty
       'text', // SSE is a text protocol
       true, // we want incremental events
-      10000, // there is no timeout defined in the WHATWG spec for EventSource
+      0, // there is no timeout defined in the WHATWG spec for EventSource
       this.__didCreateRequest.bind(this),
       this.withCredentials,
     );
