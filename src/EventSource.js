@@ -38,7 +38,6 @@ const cr = 13;
 const reTrim = /^(\s|\u00A0)+|(\s|\u00A0)+$/g;
 
 
-const maxRetryAttempts = 15;
 /**
  * An RCTNetworking-based implementation of the EventSource web standard.
  *
@@ -58,6 +57,9 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
   readyState: number = EventSource.CONNECTING;
   url: string;
   withCredentials: boolean = false;
+  // Default, retry over a minute per 2.5s.
+  maxRetryEvents: number = 24;
+  reconnectIntervalMs: number = 2500;
 
   // Event handlers
   onerror: ?Function;
@@ -74,7 +76,6 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
 
   _headers: {[key: string]: any} = {};
   _lastEventId: string = '';
-  _reconnectIntervalMs: number = 1000;
   _requestId: ?number;
   _subscriptions: Array<*>;
   _trackingName: string = 'unknown';
@@ -101,12 +102,13 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
     }
     this.url = url;
 
-    this._headers['Cache-Control'] = 'no-cache, no-store';
+    this._headers['Cache-Control'] = 'no-cache';
     this._headers.Accept = 'text/event-stream';
     if (this._lastEventId) {
       this._headers['Last-Event-ID'] = this._lastEventId;
     }
 
+    // This is an upsetting hack that appears to only show on Android even though it is HIGHLY not recommended.
     if(Platform.OS === 'android') {
       this._headers["X-Requested-With"] = "XMLHttpRequest";
     }
@@ -126,8 +128,23 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
         }
       }
 
+      if(eventSourceInitDict.disableAndroidXRequestedWith) {
+        if(Platform.OS === 'android') {
+          delete this._headers["X-Requested-With"] 
+        }
+      }
+
       if (eventSourceInitDict.withCredentials) {
         this.withCredentials = eventSourceInitDict.withCredentials;
+      }
+
+      if(eventSourceInitDict.reconnectOptions) {
+        if(eventSourceInitDict.reconnectOptions.reconnectIntervalMs) {
+          this.reconnectIntervalMs = eventSourceInitDict.reconnectOptions.reconnectIntervalMs;
+        }
+        if(eventSourceInitDict.reconnectOptions.maxRetryEvents) {
+          this.maxRetryEvents = eventSourceInitDict.reconnectOptions.maxRetryEvents;
+        }
       }
     }
 
@@ -200,8 +217,8 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
     }
 
     this.dispatchEvent({type: 'error', data: errorEventMessage});
-    if (this._reconnectIntervalMs > 0) {
-      setTimeout(this.__connnect.bind(this), this._reconnectIntervalMs);
+    if (this.reconnectIntervalMs > 0) {
+      setTimeout(this.__connnect.bind(this), this.reconnectIntervalMs);
     } else {
       this.__connnect();
     }
@@ -297,9 +314,10 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
         break;
       case 'retry':
         // Set a new reconnect interval value
+        // But I don't like this.
         const newRetryMs = parseInt(value, 10);
         if (!isNaN(newRetryMs)) {
-          this._reconnectIntervalMs = newRetryMs;
+          this.reconnectIntervalMs = newRetryMs;
         }
         break;
       default:
