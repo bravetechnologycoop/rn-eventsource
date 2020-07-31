@@ -182,6 +182,10 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
     this._subscriptions = [];
 
     this.readyState = EventSource.CLOSED;
+
+    this.dispatchEvent({
+      type: 'close'
+    });
   }
 
   __connnect(): void {
