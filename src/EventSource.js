@@ -466,7 +466,7 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
     // We are treating 5 unnsuccessful retry attempts as a sign that attempting
     // to reconnect is 'futile'. Future improvements could also add exponential
     // backoff.
-    if (this._retryAttempts < maxRetryAttempts) {
+    if (this._retryAttempts < this.maxRetryAttempts) {
       // pass along the error message so that the user sees it as part of the
       // error event fired for re-establishing the connection
       this._retryAttempts += 1;
@@ -474,7 +474,7 @@ class EventSource extends (EventTarget(...EVENT_SOURCE_EVENTS): any) {
     } else {
       this.dispatchEvent({
         type: 'error',
-        data: 'could not reconnect after ' + maxRetryAttempts + ' attempts',
+        data: 'could not reconnect after ' + this.maxRetryAttempts + ' attempts',
       });
       this.close();
     }
