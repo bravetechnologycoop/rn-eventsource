@@ -1,6 +1,6 @@
 {
   "name": "rn-eventsource",
-  "version": "1.0.3-brave",
+  "version": "1.2.0-rc.1",
   "description": "An EventSource implementation built on top of React Native's low-level Networking API",
   "repository": {
     "type": "git",
