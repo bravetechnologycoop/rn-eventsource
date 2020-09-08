@@ -1,6 +1,6 @@
 {
   "name": "rn-eventsource",
-  "version": "1.2.0-rc.1",
+  "version": "1.2.0-rc.2",
   "description": "An EventSource implementation built on top of React Native's low-level Networking API",
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
   "author": "Adam Chelminski & Darvell Long",
   "license": "MIT",
   "peerDependencies": {
-    "react-native": "^0.62.0"
+    "react-native": "^0.63.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.3",
@@ -28,7 +28,7 @@
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
     "flow-bin": "^0.117.0",
     "jest": "^25.1.0",
-    "react-native": "^0.62.0"
+    "react-native": "^0.63.2"
   },
   "dependencies": {
     "event-target-shim": "^5.0.1"
